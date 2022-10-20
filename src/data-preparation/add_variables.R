@@ -5,7 +5,7 @@ library(lme4)
 
 data <- read.csv("../../gen/temp/amazon_complete_dataset_0_1000.csv", sep = ";")
 keepa <- read_excel("../../data/KeepaExport_all_variants.xlsx", range = cell_cols("K:M"))
-colors <- read_excel("../../data/Downloads/opvallendheid_kleuren_smartphone.xlsx")
+colors <- read_excel("../../data/opvallendheid_kleuren_smartphone.xlsx")
 keepa <- keepa[,c(1,3)]
 
 #Data cleaning
