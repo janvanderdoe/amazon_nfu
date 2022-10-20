@@ -3,9 +3,9 @@ library(readxl)
 library(lubridate)
 library(lme4)
 
-data <- read.csv("C:/Users/janva/amazon_complete_dataset_0_1000.csv", sep = ";")
-keepa <- read_excel("C:/Users/janva/KeepaExport_all_variants.xlsx", range = cell_cols("K:M"))
-colors <- read_excel("C:/Users/janva/Downloads/opvallendheid_kleuren_smartphone.xlsx")
+data <- read.csv("../../gen/temp/amazon_complete_dataset_0_1000.csv", sep = ";")
+keepa <- read_excel("../../data/KeepaExport_all_variants.xlsx", range = cell_cols("K:M"))
+colors <- read_excel("../../data/Downloads/opvallendheid_kleuren_smartphone.xlsx")
 keepa <- keepa[,c(1,3)]
 
 #Data cleaning
@@ -84,4 +84,4 @@ data_usa <- data_usa %>% left_join(oldest_review, by="version_asin")
 
 data_usa <- data_usa %>% mutate(time_since_oldest_review = date_trans_correct - oldest_review)
 
-write.csv(data_usa, "C:/Users/janva/amazon_usa_clean.csv", sep = ";")
+write.csv(data_usa, "../../gen/output/amazon_usa_clean.csv", sep = ";")
