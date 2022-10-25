@@ -56,3 +56,11 @@ data %>% group_by(brand_overall) %>% count() %>% top_n(10) %>% mutate(brand_over
 data_usa %>% group_by(variant) %>% summarize(pronoun_length = mean(pronoun_length)) %>% mutate(variant = fct_reorder(variant, desc(pronoun_length))) %>% ggplot(aes(variant,pronoun_length)) +
   geom_col() +
   theme(axis.text.x = element_text(angle = 45, hjust=1))
+
+#Brand mention
+data_usa$uni_median <- ifelse(data_usa$uniq_variant_parent >= median(data_usa$uniq_variant_parent), "low NFU", "high NFU")
+
+data_usa %>% ggplot() +
+  geom_bar(aes(uni_median, brand_mention), 
+           position = "dodge", stat = "summary", fun.y = "mean") +
+  facet_wrap(vars(brand_overall))

@@ -48,10 +48,15 @@ summary(lm(helpful ~ price_new + uniq_sku_parent + uniq_variant_overall*uniq_bra
 data_usa %>% group_by(variant) %>% summarize(brand_mentions = mean(brand_mention), n=n()) %>% slice_max(n, n=10) %>% mutate(variant = fct_reorder(variant, desc(brand_mentions))) %>% ggplot(aes(variant,brand_mentions)) +
   geom_col() +
   theme(axis.text.x = element_text(angle = 45, hjust=1))
+summary(lm(brand_mention ~ uniq_variant_parent*uniq_brand_overall, data_usa))
 summary(lm(brand_mention ~ uniq_variant_overall*uniq_brand_overall + price_new + time_since_oldest_review + iphone +oos_new + oos_used + renewed, data_usa))
 summary(lm(brand_mention ~ uniq_variant_overall*uniq_sku_parent + price_new + time_since_oldest_review, data_usa_iphone))
 
 summary(lm(brand_mention ~ length + price_new + uniq_variant_overall*uniq_brand_overall*uniq_sku_parent + oos_new + renewed + review_count + renewed + iphone + listed_since, data_usa))
+
+##recom
+summary(lm(recom ~ uniq_variant_parent + uniq_brand_overall+ uniq_variant_brand + spec_mentions, data_usa))
+
 
 ###Random effects
 summary(lmer(brand_mention ~ uniq_variant_brand + (uniq_variant_brand | uniq_parent), data_usa))

@@ -28,22 +28,24 @@ for (v in variants) {
 
 temp
 #Median
-subset_iphone$uni_median <- ifelse(subset_iphone$uniqueness_variant_parent_sku >= median(subset_iphone$uniqueness_variant_parent_sku), 1, 0)
+subset_no_iphone$uni_median <- ifelse(subset_no_iphone$uniq_variant_parent >= median(subset_no_iphone$uniq_variant_parent), "low NFU", "high NFU")
 
-word_count_median <- subset_iphone %>% unnest_tokens(input = review, output = word) %>% 
+word_count_median <- subset_no_iphone %>% unnest_tokens(input = review, output = word) %>% 
   count(uni_median, word)
 word_count_median_no_sp <- word_count_median %>% anti_join(stop_words)
 top_n_by_median_long <- word_count_median_no_sp %>% group_by(uni_median) %>% arrange(desc(n), .by_group=TRUE) %>% slice_max(n, n=100, with_ties = FALSE)
 
 temp = 1:101
-for (v in c(0,1)) {
+for (v in c("low NFU","high NFU")) {
   median_word <- top_n_by_median_long %>% filter(uni_median == !!v) %>% select(word)
   
   names(median_word) <- c("n", v)
   temp = cbind(temp, rbind(median_word[2], sum(top_n_by_median_long %>% filter(uni_median == !!v) %>% ungroup() %>% select(n))))
 }
-
+#names(temp) <- c("ranking", "high NFU", "low NFU")
 temp
+
+write.csv2(temp, "../../gen/paper/median_split_uniq_variant_parent.csv")
 
 #brands
 word_count_brand <- data_usa %>% unnest_tokens(input = review, output = word) %>% 
