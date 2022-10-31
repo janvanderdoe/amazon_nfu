@@ -27,8 +27,6 @@ data$usa <- ifelse(data$country == "the United States", 1, 0)
 data_usa <- data %>% filter(usa == 1)
 data_usa$helpful <- as.numeric(data_usa$helpful)
 
-data_usa$median_variant_parent <- ifelse(data_usa$uniq_variant_parent >= median(data_usa$uniq_variant_parent), "low NFU", "high NFU")
-
 #UNIQUENESS VARIABLES
 ##Uniquen
 uniq_by_variant_overall <- data_usa %>% group_by(variant) %>% summarize(uniq_variant_overall = n()/count(data_usa))
@@ -73,4 +71,7 @@ data_usa <- data_usa %>% mutate(time_since_oldest_review = date_trans_correct - 
 
 data_usa <- data_usa %>% select(-c(X, Unnamed..0, usa, date_trans))
 data_usa <- data_usa %>% mutate_all(na_if, "")
+
+data_usa$median_variant_parent <- ifelse(data_usa$uniq_variant_parent >= median(data_usa$uniq_variant_parent), "low NFU", "high NFU")
+
 write.csv(data_usa, "../../gen/output/amazon_usa_clean.csv")
