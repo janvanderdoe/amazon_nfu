@@ -26,6 +26,9 @@ data$usa <- ifelse(data$country == "the United States", 1, 0)
 
 data_usa <- data %>% filter(usa == 1)
 data_usa$helpful <- as.numeric(data_usa$helpful)
+
+data_usa$median_variant_parent <- ifelse(data_usa$uniq_variant_parent >= median(data_usa$uniq_variant_parent), "low NFU", "high NFU")
+
 #UNIQUENESS VARIABLES
 ##Uniquen
 uniq_by_variant_overall <- data_usa %>% group_by(variant) %>% summarize(uniq_variant_overall = n()/count(data_usa))

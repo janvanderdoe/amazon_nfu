@@ -58,9 +58,15 @@ data_usa %>% group_by(variant) %>% summarize(pronoun_length = mean(pronoun_lengt
   theme(axis.text.x = element_text(angle = 45, hjust=1))
 
 #Brand mention
-data_usa$uni_median <- ifelse(data_usa$uniq_variant_parent >= median(data_usa$uniq_variant_parent), "low NFU", "high NFU")
+data_usa$median_variant_parent <- ifelse(data_usa$uniq_variant_parent >= median(data_usa$uniq_variant_parent), "low NFU", "high NFU")
 
 data_usa %>% ggplot() +
-  geom_bar(aes(uni_median, brand_mention), 
+  geom_bar(aes(median_variant_parent, brand_mention), 
+           position = "dodge", stat = "summary", fun.y = "mean") +
+  facet_wrap(vars(brand_overall))
+
+#Recommendations
+data_usa %>% filter(brand_overall != "xgody") %>% ggplot() +
+  geom_bar(aes(median_variant_parent, recom), 
            position = "dodge", stat = "summary", fun.y = "mean") +
   facet_wrap(vars(brand_overall))
