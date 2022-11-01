@@ -9,6 +9,11 @@ data_usa <- read.csv("../../gen/output/amazon_usa_clean.csv")
 data_usa %>% group_by(variant) %>% summarize(number_reviews =  n(), perc_variant= n()/count(data_usa), pronoun_length = mean(pronoun_length, na.rm=TRUE), length_review = mean(length), , number_skus = n_distinct(asin_url), mean_rating = mean(rating_float, na.rm = TRUE), price = mean(price_new, na.rm = TRUE)/100, out_of_stock = mean(oos_new, na.rm = TRUE), renewed = mean(renewed == "yes"), mean(spec_mentions)) %>% 
   arrange(desc(perc_variant))
 
+#variant variation by brand
+data_usa %>%  group_by(brand_overall, median_variant_parent) %>% count() %>%
+  pivot_wider(names_from = median_variant_parent, values_from = n) %>%
+  mutate(ratio = `high NFU`/(`low NFU`+`high NFU`)) %>% print(n=Inf)
+
 #NAs
 data_usa %>% summarise_all(~ sum(is.na(.)))
 
