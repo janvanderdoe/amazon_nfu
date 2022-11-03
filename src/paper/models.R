@@ -1,7 +1,7 @@
 library(tidyverse)
 library(lme4)
 
-data_usa <- read.csv("../../gen/output/amazon_usa_clean.csv")
+data_usa <- read.csv("../../gen/output/amazon_usa_clean.csv", sep = ";")
 
 summary(lm(pronoun_length ~ uniq_variant_parent, data_usa))
 
@@ -9,6 +9,7 @@ summary(lm(pronoun_length ~ length + price_new + uniq_variant_overall + uniq_sku
 
 summary(lmer(pronoun_length ~ uniq_sku_parent + ( uniq_sku_parent | uniq_brand_overall), data_usa))
 
+summary(lm(pronoun_length ~ length + price_new + uniq_variant_parent*time_since_oldest_review + iphone + oos_new + review_count + renewed + iphone + listed_since, data_usa))
 #Forward stepwise regression pronoun length
 min_model = lm(pronoun_length ~ price_new * uniq_variant_overall* uniq_brand_overall * review_count * iphone * oos_new *renewed, data_usa)
 max_model <- formula(pronoun_length ~ 1, data_usa)
