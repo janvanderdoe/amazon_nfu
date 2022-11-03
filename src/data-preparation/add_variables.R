@@ -14,6 +14,9 @@ data[data == 'none'] <- NA
 data[data == -1] <- NA
 data$helpful[is.na(data$helpful)] <- 0
 
+#fix misspellings of iphone
+data_usa$review <- gsub("i phone", "iphone", data_usa$review, ignore.case=TRUE)
+
 #Transformation
 
 data$date_trans_correct <- as.Date(data$date_trans, "%d-%m-%Y")

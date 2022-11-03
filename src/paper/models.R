@@ -3,7 +3,7 @@ library(lme4)
 
 data_usa <- read.csv("../../gen/output/amazon_usa_clean.csv")
 
-summary(lm(pronoun_length ~ uniq_variant_overall, data_usa))
+summary(lm(pronoun_length ~ uniq_variant_parent, data_usa))
 
 summary(lm(pronoun_length ~ length + price_new + uniq_variant_overall + uniq_sku_parent + uniq_brand_overall + uniq_variant_brand + iphone + oos_new + review_count + renewed + iphone + listed_since + time_since_oldest_review, data_usa))
 
