@@ -19,7 +19,7 @@ Other useful variables were retrieved with a Keepa API. This repository contains
 ```
 
 ## Running instructions
-The web scraper itself runs with Splash on docker in Python. The Keepa API also runs in Python. The library package 'beautifulsoup' was used to get the data.
+Run Make to run the data visualization and modeling. The web scraper itself runs with Splash on docker in Python. The Keepa API also runs in Python. The library package 'beautifulsoup' was used to get the data.
 The data cleaning was partially done in R and in Python. The modeling and visualization in R.
 
 ## About
