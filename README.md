@@ -19,7 +19,7 @@ Other useful variables were retrieved with a Keepa API. This repository contains
 ```
 
 ## Running instructions
-Run [Make](https://www.gnu.org/software/make/manual/make.html) to run the data visualization and modeling. The web scraper itself runs with [Splash](https://splash.readthedocs.io/en/stable/) on [docker](https://docs.docker.com/) in Python. The Keepa API also runs in Python. The library package 'beautifulsoup' was used to get the data.
+Run [Make](https://www.gnu.org/software/make/manual/make.html) to run the data visualization and modeling. The web scraper itself runs with [Splash](https://splash.readthedocs.io/en/stable/) on [docker](https://docs.docker.com/) in Python. The [Keepa API](https://keepa.com/#!api) also runs in Python. The library package 'beautifulsoup' was used to get the data.
 The data cleaning was partially done in R and in Python. The modeling and visualization in R.
 
 ## About
