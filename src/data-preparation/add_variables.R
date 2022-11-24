@@ -14,14 +14,10 @@ data[data == 'none'] <- NA
 data[data == -1] <- NA
 data$helpful[is.na(data$helpful)] <- 0
 
-#fix misspellings of iphone
-data_usa$review <- gsub("i phone", "iphone", data_usa$review, ignore.case=TRUE)
 
 #Transformation
 
-data$date_trans_correct <- as.Date(data$date_trans, "%d-%m-%Y")
-
-data['rating_float'] <- as.numeric(unlist(data['rating_float']))
+data$date_trans_correct <- as.Date(data$date_trans, "%Y-%m-%d")
 
 #Adding columns
 
@@ -29,6 +25,10 @@ data$usa <- ifelse(data$country == "the United States", 1, 0)
 
 data_usa <- data %>% filter(usa == 1)
 data_usa$helpful <- as.numeric(data_usa$helpful)
+data_usa$diff_rating_abs <- abs(data_usa$diff_rating)
+
+#fix misspellings of iphone
+data_usa$review <- gsub("i phone", "iphone", data_usa$review, ignore.case=TRUE)
 
 #UNIQUENESS VARIABLES
 ##Uniquen
@@ -76,5 +76,8 @@ data_usa <- data_usa %>% select(-c(X, Unnamed..0, usa, date_trans))
 data_usa <- data_usa %>% mutate_all(na_if, "")
 
 data_usa$median_variant_parent <- ifelse(data_usa$uniq_variant_parent >= median(data_usa$uniq_variant_parent), "low NFU", "high NFU")
+data_usa$median_color_parent_time <- ifelse(data_usa$uniq_color_parent_time >= median(data_usa$uniq_color_parent_time), "low NFU", "high NFU")
+data_usa$median_brand_overall <- ifelse(data_usa$uniq_brand_overall >= median(data_usa$uniq_brand_overall), "low NFU", "high NFU")
+data_usa$median_avg_rating <- ifelse(data_usa$avg_rating >= median(data_usa$avg_rating), "low avg", "high avg")
 
 write.csv(data_usa, "../../gen/output/amazon_usa_clean.csv")
