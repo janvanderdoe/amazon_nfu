@@ -76,8 +76,10 @@ data_usa <- data_usa %>% select(-c(X, Unnamed..0, usa, date_trans))
 data_usa <- data_usa %>% mutate_all(na_if, "")
 
 data_usa$median_variant_parent <- ifelse(data_usa$uniq_variant_parent >= median(data_usa$uniq_variant_parent), "low NFU", "high NFU")
-data_usa$median_color_parent_time <- ifelse(data_usa$uniq_color_parent_time >= median(data_usa$uniq_color_parent_time), "low NFU", "high NFU")
+data_usa$median_color_parent_time <- ifelse(data_usa$uniq_color_parent_time >= median(data_usa$uniq_color_parent_time), "low color uniq", "high color uniq")
 data_usa$median_brand_overall <- ifelse(data_usa$uniq_brand_overall >= median(data_usa$uniq_brand_overall), "low NFU", "high NFU")
 data_usa$median_avg_rating <- ifelse(data_usa$avg_rating >= median(data_usa$avg_rating), "low avg", "high avg")
+
+data_usa$median_market_share <- ifelse(data_usa$market_share >= median(data_usa$market_share, na.rm = TRUE), "low brand uniq", "high brand uniq")
 
 write.csv(data_usa, "../../gen/output/amazon_usa_clean.csv")

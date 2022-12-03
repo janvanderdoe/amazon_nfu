@@ -21,6 +21,7 @@ data_usa %>% group_by(median_variant_parent_time) %>% summarize(mean(diff_rating
 
 data_usa %>% group_by(variant) %>% summarize(number_reviews =  n(), perc_variant= n()/count(data_usa), pronoun_length = mean(pronoun_length, na.rm=TRUE), length_review = mean(length), , number_skus = n_distinct(asin_url), mean_rating = mean(rating_float, na.rm = TRUE), price = mean(price_new, na.rm = TRUE)/100, out_of_stock = mean(oos_new, na.rm = TRUE), renewed = mean(renewed == "yes"), mean(spec_mentions)) %>% 
   arrange(desc(perc_variant))
+
 #Brands
 data_usa %>% group_by(brand_overall) %>% count() %>% arrange(desc(n)) %>% ggplot(aes(brand_overall, n)) +
   geom_segment( aes(x=brand_overall, xend=brand_overall, y=0, yend=n), color="skyblue") +
@@ -43,13 +44,18 @@ data_usa %>%  group_by(brand_overall, median_variant_parent) %>% count() %>%
 data_usa %>% summarise_all(~ sum(is.na(.)))
 
 #Deviation from mean
-data_usa %>% ggplot(aes(diff_rating_abs, uniq_color_parent_time)) +
+data_usa %>% ggplot(aes(uniq_color_parent_time, diff_rating_abs)) +
   geom_point() +
   geom_smooth()
 
-data_usa %>% ggplot(aes(diff_rating_abs, uniq_brand_overall)) +
+data_usa %>% ggplot(aes(diff_rating_abs, market_share)) +
   geom_point() +
   geom_smooth()
+
+#Main effects plot
+data_usa %>% ggplot() +
+  geom_bar(aes(median_color_parent_time, diff_rating_abs), position = "dodge", stat = "summary", fun.y = "mean") +
+  facet_wrap(vars(median_market_share))
 
 #Rating distribution
 data_usa %>% ggplot(aes(rating)) +
