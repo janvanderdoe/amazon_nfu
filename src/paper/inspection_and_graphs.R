@@ -3,11 +3,15 @@ library(lubridate)
 
 theme_set(theme_bw(16))
 
-data_usa <- read.csv("../../gen/output/amazon_usa_clean.csv", sep = ",")
-brands <- read.csv("../../gen/temp/brand_shares.csv")
+data_usa <- read.csv("../../gen/temp/data_overall2.csv", sep = ";")
+brands <- read.csv("../../gen/output/brand_corrected.csv", sep = ";")
+data_usa$date_trans <- as.Date(data_usa$date_trans)
+
+data_usa$market_share_with_zero <- data_usa$market_share
+data_usa$market_share_with_zero[is.na(data_usa$market_share_with_zero)] <- 0
 
 data_usa <- data_usa %>%
-  mutate(month = floor_date(as.Date(date_trans_correct), "month"), brand = brand_overall) %>%
+  mutate(month = floor_date(as.Date(date_trans), "month"), brand = brand_overall) %>%
   left_join(brands %>% mutate(month = floor_date(as.Date(date_trans), "month")) %>% select(month, brand, market_share), by = c("month", "brand")) %>%
   select(!c(brand, month, date, date_trans))
 
@@ -55,8 +59,16 @@ data_usa %>% ggplot(aes(diff_rating_abs, market_share)) +
 #Main effects plot
 data_usa %>% ggplot() +
   geom_bar(aes(median_color_parent_time, diff_rating_abs), position = "dodge", stat = "summary", fun.y = "mean") +
-  facet_wrap(vars(median_market_share))
+  facet_grid(~median_market_share) +
+  facet_grid(~median_market_share) 
+  xlab("uniqueness of color") +
+  ylab("absolute difference in rating") +
+  geom_text(aes(label = diff_rating_abs), vjust = -0.2)
 
+
+data_usa %>% ggplot() +
+  geom_bar(aes(median_color_parent_time, diff_rating_abs), position = "dodge", stat = "summary", fun.y = "mean")+
+  geom_label()
 #Rating distribution
 data_usa %>% ggplot(aes(rating)) +
   geom_histogram(binwidth = 0.5)

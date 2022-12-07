@@ -16,7 +16,7 @@ data$helpful[is.na(data$helpful)] <- 0
 
 
 #Transformation
-
+data_usa$iphone <- ifelse(data_usa$brand_overall == "apple", 1, 0)
 data$date_trans_correct <- as.Date(data$date_trans, "%Y-%m-%d")
 
 #Adding columns
@@ -42,16 +42,16 @@ uniq_by_brand_overall['uniq_brand_overall'] <- unlist(uniq_by_brand_overall['uni
 data_usa <-  data_usa %>% left_join(uniq_by_brand_overall, by = "brand_overall")
 
 ##uniqueness sku_parent_sku
-uniq_by_parent <- data_usa %>% group_by(parent_asin) %>% count()
-names(uniq_by_parent) <- c("parent_asin", "uniq_parent")
-data_usa <- data_usa %>% left_join(uniq_by_parent, by = "parent_asin")
-uniq_by_sku_parent <- data_usa %>% group_by(version_asin) %>% summarize(uniq_sku_parent = n()/mean(uniq_parent)) %>% filter(version_asin != "")
-data_usa <- data_usa %>% left_join(uniq_by_sku_parent, by = "version_asin")
+uniq_by_parent <- data_usa3 %>% group_by(asin_from_link) %>% count()
+names(uniq_by_parent) <- c("asin_from_link", "uniq_parent")
+data_usa3 <- data_usa3 %>% left_join(uniq_by_parent, by = "asin_from_link")
+uniq_by_sku_parent <- data_usa3 %>% group_by(variant, asin_from_link) %>% summarize(uniq_sku_parent = n()/mean(uniq_parent)) %>% filter(variant != "")
+data_usa3 <- data_usa3 %>% left_join(uniq_by_sku_parent, by = "variant")
 data_usa$uniq_sku_parent <- replace(data_usa$uniq_sku_parent, which(data_usa$uniq_sku_parent <0), NA)
 
 #uniqueness _variant_parent_sku
-uniq_by_variant_parent <- data_usa %>% group_by(variant, parent_asin) %>% summarize(uniq_variant_parent = n()/mean(uniq_parent))
-data_usa <- data_usa %>% left_join(uniq_by_variant_parent, by = c("variant", "parent_asin"))
+uniq_by_variant_parent <- data_usa3 %>% group_by(variant, asin_from_link) %>% summarize(uniq_variant_parent = n()/mean(uniq_parent))
+data_usa3 <- data_usa3 %>% left_join(uniq_by_variant_parent, by = c("variant", "asin_from_link"))
 
 ##Uniqueness variant_brand
 count_brand_variant <- data_usa %>% group_by(brand_overall, variant) %>% summarize(brand_variant_count = n())
@@ -80,6 +80,6 @@ data_usa$median_color_parent_time <- ifelse(data_usa$uniq_color_parent_time >= m
 data_usa$median_brand_overall <- ifelse(data_usa$uniq_brand_overall >= median(data_usa$uniq_brand_overall), "low NFU", "high NFU")
 data_usa$median_avg_rating <- ifelse(data_usa$avg_rating >= median(data_usa$avg_rating), "low avg", "high avg")
 
-data_usa$median_market_share <- ifelse(data_usa$market_share >= median(data_usa$market_share, na.rm = TRUE), "low brand uniq", "high brand uniq")
+data_usa$median_market_share <- ifelse(data_usa$market_share_with_zero >= median(data_usa$market_share_with_zero, na.rm = TRUE), "low brand uniq", "high brand uniq")
 
 write.csv(data_usa, "../../gen/output/amazon_usa_clean.csv")
