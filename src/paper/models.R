@@ -5,8 +5,9 @@ library(lmtest)
 library(caret)
 library(AID)
 library(XLConnect)
+library(ggfortify)
 
-data_usa <- read.csv("../../gen/output/amazon_usa_clean.csv", sep = ";")
+data_usa <- read.csv("../../gen/output/amazon_usa_clean.csv", sep = ",")
 
 #Only complete observations
 data_usa <- data_usa[complete.cases(data_usa %>% select(diff_rating_abs, uniq_color_parent_time, market_share_with_zero, oos_new, reviews, renewed, price_new)),]
@@ -26,7 +27,7 @@ data_usa %>% group_by(median_market_share, median_color_parent_time) %>%
 summary(lm(diff_rating_abs ~ uniq_color_parent_time * market_share_with_zero, data_usa))
 
 #Complete model
-model <- lm(diff_rating_abs ~ uniq_color_parent_time * market_share_with_zero + iphone + oos_new + reviews + renewed + price_new, data_usa)
+model <- lm(diff_rating_abs ~ uniq_color_parent_time + market_share_with_zero + iphone + oos_new + reviews + renewed + price_new, data_usa)
 summary(model)
 #Check for multicollinearity
 vif(model) #multicollinearity brands
@@ -35,6 +36,12 @@ round(cor(data_usa %>% select(uniq_color_parent_time, market_share_with_zero, ip
 
 model2 <- lm(diff_rating_abs ~ uniq_color_parent_time * market_share_with_zero + oos_new + reviews + renewed + price_new, data_usa)
 summary(model2)
+
+
+
+model_inv <- lm(diff_rating_abs ~ inv_uniq_color * inv_market_share + oos_new + reviews + renewed + price_new, data_usa)
+summary(model_inv)
+
 writeWorksheetToFile("../../gen/audit/model2.xlsx", 
                      data = summary(model2), 
                      sheet = "summary", 

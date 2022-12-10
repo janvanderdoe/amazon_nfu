@@ -105,3 +105,14 @@ data_usa %>% group_by(brand_overall) %>% summarize(n = n(), share = n()/count(da
 
 data %>% group_by(brand_overall) %>% count() %>% top_n(10) %>% mutate(brand_overall = fct_reorder(brand_overall, desc(n))) %>% ggplot(aes(brand_overall, n)) +
   geom_col()
+
+#Main effects
+data_usa <- data_usa %>% left_join(
+  data_usa %>% group_by(median_color_parent_time, median_market_share) %>% summarize(sd(diff_rating_abs, na.rm = TRUE)),
+  by = c("median_color_parent_time", "median_market_share"))
+
+data_usa <- data_usa %>% rename(sd = "sd(diff_rating_abs, na.rm = TRUE)")
+
+ggplot(data_usa) +
+  geom_bar( aes(x=median_market_share, y=diff_rating_abs), stat="identity", fill="skyblue", alpha=0.7) +
+  geom_errorbar( aes(x=median_market_share, ymin=diff_rating_abs-sd, ymax=diff_rating_abs+sd), width=0.4, colour="orange", alpha=0.9, size=1.3)
