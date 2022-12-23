@@ -116,3 +116,11 @@ data_usa <- data_usa %>% rename(sd = "sd(diff_rating_abs, na.rm = TRUE)")
 ggplot(data_usa) +
   geom_bar( aes(x=median_market_share, y=diff_rating_abs), stat="identity", fill="skyblue", alpha=0.7) +
   geom_errorbar( aes(x=median_market_share, ymin=diff_rating_abs-sd, ymax=diff_rating_abs+sd), width=0.4, colour="orange", alpha=0.9, size=1.3)
+
+#deviation vs average rating
+data_usa %>% ggplot(aes(rating, diff_rating_abs)) +
+  geom_point() +
+  geom_smooth()
+
+data_usa %>% ggplot(aes(list_time_days, diff_rating_abs, color = median_color_parent_time)) +
+  geom_smooth()
