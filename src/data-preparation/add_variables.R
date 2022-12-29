@@ -14,7 +14,7 @@ data_usa$iphone <- ifelse(data_usa$brand_overall == "apple", 1, 0)
 
 data_usa$listed_since_date <- as.Date(as.POSIXct((data_usa$listed_since+21564000)*60, origin="1970-01-01"))
 
-data_usa$list_time_days <- as.numeric(data_usa$date_trans - data_usa$listed_since_date)
+data_usa$list_time_days <- as.numeric(as.Date(data_usa$date_trans) - data_usa$listed_since_date)
 
 #Merging brand dataset
 data_usa <- data_usa %>%
