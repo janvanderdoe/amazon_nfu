@@ -1,110 +1,90 @@
 library(tidyverse)
-library(lme4)
-library(car)
-library(lmtest)
-library(caret)
-library(AID)
-library(XLConnect)
-library(ggfortify)
+library(car) #used for vif
+library(broom) #used as input
+library(texreg) #comparing and saving models
+library(writexl) #saving
+library(caret) #boxcox
+library(ggfortify) #autoplot
+library(lmtest) #bp test
 
-data_usa <- read.csv("../../gen/output/amazon_usa_clean.csv", sep = ",")
+setwd("~/Git projects/amazon_nfu/src/paper")
+data_usa <- read.csv("../../gen/output/amazon_usa_clean2.csv", sep = ",", row.names = 1)
 
 #Only complete observations
 data_usa <- data_usa[complete.cases(data_usa %>% select(diff_rating_abs, uniq_color_parent_time, market_share_with_zero, oos_new, reviews, renewed, price_new)),]
 
 #Descriptive statistics
-rel_cols <- c("diff_rating_abs", "inv_mc_market_share", "inv_mc_uniq_color", "oos_new", "reviews", "price_new", "rating", "iphone", "renewed", "list_time_days") 
+rel_cols <- c("diff_rating_abs", "inv_mc_market_share", "inv_mc_uniq_color", "oos_new", "reviews", "price_new", "rating_keepa", "rating_amazon", "renewed_num", "list_time_days") 
 
-data_summary <- c("variable", "sd", "mean", "median", "min", "max")
+data_summary <- c("variable", "mean", "median", "sd", "min", "max")
 for(col in rel_cols) {
   col <- c(col, sd(data_usa[[col]], na.rm = T), mean(data_usa[[col]], na.rm = TRUE), median(data_usa[[col]], na.rm = TRUE), min(data_usa[[col]], na.rm = TRUE), max(data_usa[[col]], na.rm = TRUE))
   data_summary <- cbind(data_summary, col)
 }
-data_summary
-data_usa %>% group_by(median_market_share, median_color_parent_time) %>%
-  summarise(mean.uniq = mean(diff_rating_abs, na.rm = TRUE),
-            sd.uniq = sd(diff_rating_abs, na.rm = TRUE),
-            n.uniq = n()) %>%
-  mutate(se.uniq = sd.uniq / sqrt(n.uniq),
-        lower.ci.uniq = mean.uniq - qt(1 - (0.05 / 2), n.uniq - 1) * se.uniq,
-        upper.ci.uniq = mean.uniq + qt(1 - (0.05 / 2), n.uniq - 1) * se.uniq) %>% 
-  ggplot(aes(median_color_parent_time, mean.uniq)) + geom_col(fill="gray", alpha=1) +
-  facet_wrap(~median_market_share) +
-  geom_errorbar( aes(x=median_color_parent_time, ymin=lower.ci.uniq, ymax=upper.ci.uniq), width=0.4, colour="black", alpha=0.8, size=0.8) +
-  #facet_wrap(~median_color_parent_time) +
-  geom_text(aes(label = round(mean.uniq, 3)), vjust = 2) +
-  ylab("Absolute deviation rating") +
-  theme(axis.ticks.x=element_blank())
+t(data_summary)
 
-#Simple model
-summary(lm(diff_rating_abs ~ uniq_color_parent_time * market_share_with_zero, data_usa))
+#Correlation matrix
+data_usa$renewed_num <- ifelse(data_usa$renewed == "yes", 1, 0)
+round(cor(data_usa %>% select(diff_rating_abs, inv_mc_uniq_color, inv_mc_uniq_color_data, inv_mc_market_share, oos_new, reviews, price_new, rating_keepa, renewed_num, list_time_days), use = "complete.obs"),2)
 
-#Complete model
-model <- lm(diff_rating_abs ~ uniq_color_parent_time + market_share_with_zero + iphone + oos_new + reviews + renewed + price_new, data_usa)
-summary(model)
+cor(data_usa$uniq_color_data_time, data_usa$uniq_color_parent_time, use = "complete.obs")
+# t tests
+t.test(diff_rating_abs ~ median_market_share, data_usa %>% filter(median_color_parent_time == "low color uniqueness"))
+t.test(diff_rating_abs ~ median_color_parent_time, data_usa)
+
+#MAIN MODEL
+orig_model <- lm(diff_rating_abs ~ inv_mc_uniq_color * inv_mc_market_share + oos_new + log(reviews) + price_new  + rating_keepa + renewed + list_time_days, data_usa)
+write.table(tidy(orig_model), "../../gen/paper/orig_model.csv", dec = ".", sep = ";") #export for table
+summary(orig_model)
+
 #Check for multicollinearity
-vif(model) #multicollinearity brands
-##Correlation plot to check offender
-round(cor(data_usa %>% select(diff_rating_abs, inv_mc_market_share, inv_mc_uniq_color, oos_new, reviews, price_new, rating, renewed_num, iphone, list_time_days), use = "complete.obs"),2)
+write.csv2(round(as.data.frame(vif(orig_model)),3), "../../gen/paper/vif_output.csv") #no multicollinearity
 
-model2 <- lm(diff_rating_abs ~ uniq_color_parent_time * market_share_with_zero + oos_new + reviews + renewed + price_new, data_usa)
-summary(model2)
+#Check for heteroscedasticity
+bptest(orig_model) # sig, meaning hetero
+autoplot(orig_model)
 
+##Trying to solve it by transforming the y
+trans_diff_rating <- BoxCoxTrans(data_usa$diff_rating_abs+1e-10, na.rm = T) #lambda is 0.3
 
+orig_model_trans <- lm(diff_rating_abs^0.3 ~ inv_mc_uniq_color * inv_mc_market_share + oos_new + log(reviews) + price_new  + rating_keepa + renewed + list_time_days, data_usa)
+summary(orig_model_trans)
+autoplot(orig_model_trans) #did not solve
 
-model_inv <- lm(diff_rating_abs ~ inv_uniq_color * inv_market_share + oos_new + reviews + renewed + price_new, data_usa)
-summary(model_inv)
+##Using a WLS instead
+wt <- 1 / lm(abs(orig_model$residuals) ~ orig_model$fitted.values)$fitted.values^2
 
-XLConnect::writeWorksheetToFile("../../gen/audit/model9.xlsx", 
-                     data = summary(data_usa), 
-                     sheet = "summary", 
-                     header = TRUE,
-                     clearSheets = TRUE)
-vif(model2) #removing iPhone solves issue
+orig_model_wt <- lm(diff_rating_abs ~ inv_mc_uniq_color * inv_mc_market_share + oos_new + log(reviews) + price_new  + rating_keepa + renewed + list_time_days, data_usa, weights = wt)
+summary(orig_model_wt)
+autplot(orig_model_wt)
 
-#Check for heteroscedicity
-autoplot(model2)
+#Testing autocorrelation
+durbinWatsonTest(orig_model) #1.82, which is okay
 
-bptest(model2) #sig, meaning hetero
+#ALTERNATIVE MODELS
+model_no_zero <- lm(diff_rating_abs ~ inv_mc_uniq_color * inv_mc_excl_zero + oos_new + log(reviews) + price_new  + rating_keepa + renewed + list_time_days, data_usa)
+summary(model_no_zero)
 
-##Trying to solve this by transforming the DV
-trans_diff_rating <- BoxCoxTrans(data_usa$diff_rating_abs+1e-10)
-print(trans_diff_rating)
-data_usa <- cbind(data_usa, trans_diff_rating = predict(trans_diff_rating, data_usa$diff_rating_abs))
+model_alt_uniq <- lm(diff_rating_abs ~ inv_mc_uniq_color_data * inv_mc_market_share + oos_new + log(reviews) + price_new  + rating_keepa + renewed + list_time_days, data_usa)
+summary(model_alt_uniq)
 
-model3 <- lm(trans_diff_rating ~ uniq_color_parent_time * market_share_with_zero + oos_new + reviews + renewed + price_new, data_usa)
-summary(model3)
-autoplot(model3)
+model_neg_dev <- lm(diff_rating_abs ~ inv_mc_uniq_color * inv_mc_market_share + oos_new + log(reviews) + price_new  + rating_keepa + renewed + list_time_days, data_usa %>% filter(diff_rating < 0))
+summary(model_neg_dev)
 
-bptest(model3)
-out <- boxcoxnc(data_usa[['diff_rating_abs']]+1e-10, method = "sw", lambda = seq(-2,2,0.0001), verbose = F, plot = F)
+model_pos_dev <- lm(diff_rating_abs ~ inv_mc_uniq_color * inv_mc_market_share + oos_new + log(reviews) + price_new  + rating_keepa + renewed + list_time_days, data_usa %>% filter(diff_rating >= 0))
+summary(model_pos_dev)
 
-##Did not work. Try weighted ols instead
-model4 <- lm(diff_rating_abs ~ uniq_color_parent_time * market_share_with_zero + oos_new + reviews + renewed + price_new, data_usa)
-wt <- 1 / lm(abs(model2$residuals) ~ model2$fitted.values)$fitted.values^2
-model5 <- lm(diff_rating_abs ~ uniq_color_parent_time * market_share_with_zero + oos_new + reviews + renewed + price_new, data_usa, weights = wt)
-autoplot(model5)
-bptest(model5)
+model_variants <- lm(diff_rating_abs ~ inv_mc_uniq_color * inv_mc_market_share + oos_new + log(reviews) + price_new  + rating_keepa + renewed + list_time_days + variant, data_usa)
+summary(model_variants)
+wordreg(model_variants, "../../gen/audit/model_variants.doc", digits = 3)
 
-model6 <- lm(trans_diff_rating ~ uniq_color_parent_time * market_share_with_zero + oos_new + reviews + renewed + price_new, data_usa, weights = wt)
-bptest(model6)
+model_android <- lm(diff_rating_abs ~ inv_mc_uniq_color * inv_mc_market_share + oos_new + log(reviews) + price_new  + rating_keepa + renewed + list_time_days, data_usa %>% filter(brand_overall == "apple"))
+summary(model_android)
 
-#Better model fit, but heteroscedasticity
-wt1 <- 1 / (model5$residuals)^2
-model7 <- lm(trans_diff_rating ~ uniq_color_parent_time * market_share_with_zero + oos_new + reviews + renewed + price_new, data_usa, weights = wt1)
+#Overview models
+screenreg(list(orig_model, model_no_zero, model_alt_uniq, model_android, model_variants, model_neg_dev, model_pos_dev), digits = 3)
 
-#Independence of residual values
-durbinWatsonTest(model3)
-
-model8 <- lm(diff_rating_abs ~ inv_mc_market_share * inv_mc_uniq_color + oos_new + reviews + price_new + rating + I(rating^2) + iphone + renewed, data_usa)
-summary(model8)
-
-wt8 <- 1 / lm(abs(model8$residuals) ~ model8$fitted.values)$fitted.values^2
-
-model9 <- lm(diff_rating_abs ~ inv_mc_market_share * inv_mc_uniq_color + oos_new + log(reviews) + price_new  + I(rating^2) + renewed + iphone + list_time_days, data_usa)
-summary(model9)
-
-
-autoplot(model9)
-bptest(model8)
-durbinWatsonTest(model8)
+#Export
+wordreg(list(orig_model, model_no_zero, model_alt_uniq, model_android, model_variants, model_neg_dev, model_pos_dev), 
+        custom.model.names = c('orig', 'nozero', 'alt_col', 'android', 'variants', 'neg_dev', 'pos_dev'),
+        digits = 3, "../../models.doc", single.row = TRUE)
